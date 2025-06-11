@@ -20,6 +20,8 @@ This Google Apps Script project allows Google Workspace administrators to manage
 2. Create a new project
 3. Copy and paste the files from this repository into your project
 
+If you're using version control with Git, a `.gitignore` file is included to prevent sensitive files (like `.clasp.json` which contains your script ID) from being committed.
+
 ### 2. Set Up Google Cloud Platform Project
 
 To use this script, you'll need a Google Cloud Platform project with the necessary APIs and permissions:
@@ -60,6 +62,7 @@ To use this script, you'll need a Google Cloud Platform project with the necessa
    - Click "Set project"
 3. Go to the "Script Properties" section
 4. Add a new script property named `SERVICE_ACCOUNT_KEY` with the entire content of your downloaded JSON key file
+   - **Important Security Note**: Never share or check this key into public repositories. The included `.gitignore` file helps prevent accidental exposure of the service account key.
 
 ### 4. Update Configuration
 
@@ -71,7 +74,7 @@ const CONFIG = {
     searchDomain: "yourdomain.com", // Your Google Workspace domain
     adminEmail: "admin@yourdomain.com", // An admin user in your domain
     excludedOUs: ["Service Accounts"], // OUs to exclude
-    defaultTemplateId: "minimalist", // Default template ID - options: card, minimalist, modern, template_modern
+    defaultTemplateId: "card", // Default template ID - options: card, minimalist, modern, template_modern
 
     // Company information for templates
     companyName: "Your Company Name",
@@ -123,8 +126,23 @@ const CONFIG = {
 ### Running the Script
 
 1. Deploy the script as a web app or run it from the Apps Script editor
-2. Use the `runScript()` function to update all signatures
+2. Use the `runSignatureManager()` function to update all signatures
 3. Use the `runAllTests()` function to test your configuration
+4. Use the `runAuthDiagnostics()` function to check authentication and permissions
+
+### Utility Functions
+
+#### List Available Templates
+
+The script provides a utility function to help you see all available templates:
+
+```javascript
+function listAvailableTemplates() {
+  // This will show all templates in the Apps Script logger
+}
+```
+
+Run this function to see all available template IDs and a preview of their content in the Apps Script logs. This is helpful when you want to confirm which templates are available in your project.
 
 ### Templates
 
@@ -133,6 +151,7 @@ This script comes with built-in templates:
 1. `card`: Modern business card-style template with a bordered design and professional layout
 2. `minimalist`: Clean, streamlined template with the logo at the top for a simple appearance
 3. `modern`: Professional layout with logo alongside contact information in a two-column design
+4. `template_modern`: Classic layout with horizontal divider between sections
 
 #### Template Features
 
@@ -142,6 +161,8 @@ This script comes with built-in templates:
 - Responsive design works well on both desktop and mobile devices
 
 You can specify which template to use by updating the `defaultTemplateId` in the configuration or by placing your template in Google Drive and using its file ID.
+
+For more detailed information about creating and customizing templates, please refer to the [TEMPLATES.md](TEMPLATES.md) file.
 
 ### Template Placeholders
 
@@ -297,6 +318,22 @@ The diagnostics tool checks:
 ### Logs
 
 Check the Apps Script execution logs for detailed information about any errors or issues. The enhanced logging in this script provides helpful debug information when things go wrong.
+
+## Contributing
+
+Contributions to the Gmail Signature Manager are welcome! Here's how you can contribute:
+
+1. **Submit Issues**: Report bugs or suggest features by opening an issue
+2. **Create Pull Requests**: Submit PRs to fix issues or add new features
+3. **Improve Documentation**: Help clarify setup instructions or add examples
+4. **Add Templates**: Contribute new email signature templates
+
+When contributing code, please:
+
+- Follow the existing code style
+- Add appropriate comments
+- Test your changes thoroughly
+- Update documentation as needed
 
 ## License
 
