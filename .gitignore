@@ -1,5 +1,6 @@
 # Google Apps Script local development
 .clasp.json
+.service-account-key.json
 
 # Environment and configuration
 .env

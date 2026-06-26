@@ -1,0 +1,5 @@
+# Exclude everything by default, then whitelist Apps Script files
+**
+!*.js
+!*.html
+!appsscript.json

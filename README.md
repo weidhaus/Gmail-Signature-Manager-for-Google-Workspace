@@ -14,59 +14,85 @@ This Google Apps Script project allows Google Workspace administrators to manage
 
 ## Setup Instructions
 
-### 1. Create a New Google Apps Script Project
+### Option A — Deploy script (recommended)
 
-1. Go to [Google Apps Script](https://script.google.com/)
-2. Create a new project
-3. Copy and paste the files from this repository into your project
+A `deploy.sh` script handles the GCP setup and code push automatically, then walks you through the remaining manual steps.
 
-If you're using version control with Git, a `.gitignore` file is included to prevent sensitive files (like `.clasp.json` which contains your script ID) from being committed.
+**Prerequisites:** `gcloud` CLI, `node` + `npm`, `python3`
 
-### 2. Set Up Google Cloud Platform Project
+```bash
+git clone https://github.com/weidhaus/Gmail-Signature-Manager-for-Google-Workspace
+cd Gmail-Signature-Manager-for-Google-Workspace
+./deploy.sh
+```
 
-To use this script, you'll need a Google Cloud Platform project with the necessary APIs and permissions:
+The script will:
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Note your project number (you'll need it in step 4)
-4. Enable the required APIs:
-   - Admin SDK API
-   - Gmail API
-5. Set up OAuth consent screen:
-   - Go to "APIs & Services" > "OAuth consent screen"
-   - Choose "Internal" if this is for a Google Workspace organization (recommended)
-   - Fill in the required information (App name, User support email, Developer contact email)
-   - No need to add scopes as we'll be using a service account with domain-wide delegation
-   - Save and continue
+1. Let you choose a GCP project or create a new one
+2. Enable the required APIs (Admin SDK, Gmail, Drive, Apps Script)
+3. Create a service account and download its key
+4. Prompt for your domain, admin email, and a test user — and write them into `config.js`
+5. Create the Apps Script project and push all files
+6. Walk you through the four manual steps that cannot be automated
+
+---
+
+### Option B — Manual setup
+
+#### 1. Clone and push to Apps Script
+
+Prerequisites: `node` + `npm`
+
+```bash
+npm install -g @google/clasp   # Google's Apps Script CLI
+clasp login
+clasp create --title "Gmail Signature Manager" --type standalone
+clasp push --force
+```
+
+#### 2. Set up a GCP project
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/) and create or select a project
+2. Note the **project number** (shown on the project dashboard — not the project ID)
+3. Enable the required APIs:
+   - [Admin SDK API](https://console.cloud.google.com/apis/library/admin.googleapis.com)
+   - [Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com)
+4. Configure the OAuth consent screen:
+   - APIs & Services → OAuth consent screen → Get started
+   - User type: **Internal** → Create
+   - Fill in App name and support email → Save
+5. Create an OAuth client ID:
+   - APIs & Services → [Credentials](https://console.cloud.google.com/apis/credentials) → + Create Credentials → OAuth client ID
+   - Application type: **Web application** → Create
 6. Create a service account:
-   - Go to "IAM & Admin" > "Service Accounts"
-   - Click "Create Service Account"
-   - Name your service account and set the role to "Basic > Editor"
-   - Create a JSON key and download it
-7. In your Google Workspace Admin Console:
+   - IAM & Admin → Service Accounts → Create Service Account
+   - Name it (e.g. `gmail-sig-manager`) → Create and continue → Done
+   - Open the service account → Keys → Add Key → Create new key → JSON → download
 
-   - Go to Security > API Controls > Domain-wide Delegation
-   - Add a new API client with the client ID from your service account
-   - Add the following OAuth scopes:
+#### 3. Finish configuration in Apps Script
 
-   ```text
-   https://www.googleapis.com/auth/gmail.settings.basic,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/script.external_request
-   ```
+1. Open the script editor at [script.google.com](https://script.google.com)
+2. **Link GCP project:** ⚙ Project Settings → Change project → enter the project number → Set project
+3. **Add service account key:** ⚙ Project Settings → Script Properties → + Add property
+   - Name: `SERVICE_ACCOUNT_KEY`
+   - Value: paste the entire contents of the downloaded JSON key file
 
-### 3. Configure the Script
+#### 4. Configure domain-wide delegation
 
-1. In your Google Apps Script project, go to "Project Settings"
-2. In the "Google Cloud Platform (GCP) Project" section:
-   - Click "Change project"
-   - Enter the GCP project number you noted earlier
-   - Click "Set project"
-3. Go to the "Script Properties" section
-4. Add a new script property named `SERVICE_ACCOUNT_KEY` with the entire content of your downloaded JSON key file
-   - **Important Security Note**: Never share or check this key into public repositories. The included `.gitignore` file helps prevent accidental exposure of the service account key.
+In the [Google Workspace Admin Console](https://admin.google.com/ac/owl/domainwidedelegation):
 
-### 4. Update Configuration
+- Add new → enter the **numeric client ID** from the service account key file
+- OAuth scopes:
 
-Modify the `config.js` file with your organization's details:
+  ```text
+  https://www.googleapis.com/auth/gmail.settings.basic,https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/script.external_request
+  ```
+
+- Authorize
+
+#### 5. Update configuration
+
+Modify `config.js` with your organisation's details and push again (`clasp push --force`):
 
 ```javascript
 const CONFIG = {
