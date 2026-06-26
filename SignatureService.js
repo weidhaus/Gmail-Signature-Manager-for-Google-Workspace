@@ -66,58 +66,6 @@ class SignatureService {
     return await this.templateManager.loadTemplate(this.config.CLIENT.defaultTemplateId);
   }
 
-  _createBatches(items) {
-    return Array.from(
-      { length: Math.ceil(items.length / this.config.API.BATCH_SIZE) },
-      (_, i) =>
-        items.slice(
-          i * this.config.API.BATCH_SIZE,
-          (i + 1) * this.config.API.BATCH_SIZE
-        )
-    );
-  }
-
-  async _processBatches(batches, template) {
-    const results = { processed: [], failed: {} };
-
-    for (const batch of batches) {
-      const batchResults = await this._processBatch(batch, template);
-      results.processed.push(...batchResults.processed);
-      Object.assign(results.failed, batchResults.failed);
-      Utilities.sleep(this.config.API.DELAY_BETWEEN_CALLS);
-    }
-
-    return results;
-  }
-
-  async _processBatch(userEmails, template) {
-    const results = { processed: [], failed: {} };
-
-    for (const email of userEmails) {
-      try {
-        await this._setSignature(email, template);
-        results.processed.push(email);
-        // Add delay between individual requests
-        Utilities.sleep(1000);
-      } catch (error) {
-        if (error.message.includes('Rate Limit Exceeded')) {
-          // Wait longer if rate limited
-          Utilities.sleep(5000);
-          // Retry once
-          try {
-            await this._setSignature(email, template);
-            results.processed.push(email);
-          } catch (retryError) {
-            results.failed[email] = retryError.message;
-          }
-        } else {
-          results.failed[email] = error.message;
-        }
-      }
-    }
-    return results;
-  }
-
   async _setSignature(email, template) {
     try {
       if (!template) {
@@ -259,33 +207,18 @@ class SignatureService {
     return JSON.parse(response.getContentText());
   }
 
-  _getGmailService(email) {
-    return OAuth2.createService(`Gmail_${email}`)
-      .setSubject(email)
-      .setTokenUrl(serviceAccount.token_uri)
-      .setPrivateKey(serviceAccount.private_key)
-      .setIssuer(serviceAccount.client_email)
-      .setScope("https://www.googleapis.com/auth/gmail.settings.basic")
-      .setCache(CacheService.getScriptCache())
-      .setPropertyStore(PropertiesService.getScriptProperties());
-  }
-
-  _getCurrentSignature(email) {
-    throw new Error("Method not used anymore");
-  }
-
   _getUserData(schema) {
     const userData = {
       "{FirstName}": schema.name?.givenName || "",
       "{LastName}": schema.name?.familyName || "",
       "{JobTitle}": schema.organizations?.[0]?.title || "",
-      "{Team}": schema.organizations?.[0]?.department || "",
+      "{Department}": schema.organizations?.[0]?.department || "",
       "{EmailAddress}": schema.primaryEmail || "",
-      "{ImageUrl}":
+      "{CompanyLogo}":
         schema.thumbnailPhotoUrl || this.config.CLIENT.companyLogoUrl || "",
-      "{Phone}": schema.phones?.find((p) => p.type === "mobile")?.value || "",
+      "{PhoneNumber}": schema.phones?.find((p) => p.type === "mobile")?.value || "",
       "{Location}":
-        schema.addresses?.find((a) => a.type === "work")?.locality || "Berlin",
+        schema.addresses?.find((a) => a.type === "work")?.locality || "",
     };
     return userData;
   }
@@ -320,16 +253,4 @@ class SignatureService {
     );
   }
 
-  async _compareSignatures(currentSignature, newSignature) {
-    // Add version metadata
-    const version = new Date().toISOString();
-    const versionedSignature = newSignature.replace(
-      '</body>',
-      `<!-- Version: ${version} --></body>`
-    );
-
-    // Compare ignoring version
-    const stripVersion = (sig) => sig.replace(/<!-- Version: .+ -->/g, '');
-    return stripVersion(currentSignature) === stripVersion(newSignature);
-  }
 }

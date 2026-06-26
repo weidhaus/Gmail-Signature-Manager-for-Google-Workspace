@@ -4,7 +4,7 @@
  * This script allows Google Workspace administrators to manage and update
  * email signatures across their organization in a consistent manner.
  *
- * @author Originally by cweidhaus, cleaned up for public use
+ * @author cweidhaus
  * @version 1.0.0
  * @license MIT
  */
