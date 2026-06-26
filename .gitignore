@@ -21,6 +21,7 @@ jspm_packages/
 
 # Claude Code
 .claude/
+.claude
 
 # Log files
 *.log
