@@ -18,6 +18,9 @@ jspm_packages/
 *.sublime-*
 .DS_Store
 
+# Claude Code
+.claude/
+
 # Log files
 *.log
 npm-debug.log*
